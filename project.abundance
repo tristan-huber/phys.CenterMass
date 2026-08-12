@@ -1,13 +1,86 @@
 {
-    "atomType": "Molecule",
-    "x": 0,
-    "y": 0,
-    "uniqueID": "id-53737",
-    "name": "phys.CenterMass",
-    "topLevel": true,
-    "allAtoms": [],
-    "allConnectors": [],
-    "unitsKey": "Unitless",
-    "fileTypeVersion": 1,
-    "filetypeVersion": 1
+  "atomType": "Molecule",
+  "x": 0,
+  "y": 0,
+  "uniqueID": "id-53737",
+  "name": "phys.CenterMass",
+  "ioValues": [
+    {
+      "name": "assembly",
+      "ioValue": 10
+    },
+    {
+      "name": "defaultDensity",
+      "ioValue": 1,
+      "currentEquation": "1"
+    }
+  ],
+  "topLevel": true,
+  "allAtoms": [
+    {
+      "atomType": "Output",
+      "x": 0.98,
+      "y": 0.5,
+      "uniqueID": "id-53738",
+      "ioValues": [
+        {
+          "name": "number or geometry",
+          "ioValue": "__GEOMETRY_INPUT__"
+        }
+      ]
+    },
+    {
+      "atomType": "Input",
+      "x": 0.0231,
+      "y": 0.31142857142857144,
+      "uniqueID": "id-53740",
+      "name": "assembly"
+    },
+    {
+      "atomType": "Input",
+      "x": 0.0231,
+      "y": 0.6085714285714285,
+      "uniqueID": "id-53743",
+      "name": "defaultDensity"
+    },
+    {
+      "atomType": "Code",
+      "x": 0.3671875,
+      "y": 0.64,
+      "uniqueID": "id-53746",
+      "ioValues": [
+        {
+          "name": "assembly",
+          "ioValue": "__GEOMETRY_INPUT__"
+        },
+        {
+          "name": "defaultDensity",
+          "ioValue": 1
+        }
+      ],
+      "interpreterVersion": 1,
+      "code": "function run(assembly: Assembly, defaultDensity: number) {\n  const points: Assembly[] = []\n  assembly.onLeafs((leaf) => {\n    if (leaf.is3D()) {\n      const props = replicad.measureShapeVolumeProperties(leaf.geometry as replicad.Shape3D)\n      points.push(new Assembly({\n        ...leaf,\n        geometry: replicad.makeVertex(props.centerOfMass),\n        metadata: { mass: leaf.metadata?.mass ? leaf.metadata.mass : defaultDensity * props.volume }\n      }))\n    } else if (leaf.isPoint() && leaf.metadata?.mass != undefined) {\n      points.push(leaf);\n    }\n    return leaf;\n  })\n\n  return centerOfMass(points);\n}\n\nfunction centerOfMass(points: Assembly[]): Assembly {\n  let totalMass = 0;\n  let sx = 0, sy = 0, sz = 0;\n\n  for (const { geometry, metadata } of points) {\n    const [x, y, z] = (geometry as replicad.Vertex).asTuple();\n    const m = metadata?.mass;\n    sx += x * m;\n    sy += y * m;\n    sz += z * m;\n    totalMass += m;\n  }\n\n  if (totalMass === 0) {\n    throw new Error(\"centerOfMass: total mass is zero.\");\n  }\n\n  return new Assembly({\n    geometry: replicad.makeVertex([sx / totalMass, sy / totalMass, sz / totalMass]),\n    metadata: { mass: totalMass }\n  })\n}",
+      "compiledCode": "\"use strict\";\nfunction run(assembly, defaultDensity) {\n    const points = [];\n    assembly.onLeafs((leaf) => {\n        if (leaf.is3D()) {\n            const props = replicad.measureShapeVolumeProperties(leaf.geometry);\n            points.push(new Assembly({\n                ...leaf,\n                geometry: replicad.makeVertex(props.centerOfMass),\n                metadata: { mass: leaf.metadata?.mass ? leaf.metadata.mass : defaultDensity * props.volume }\n            }));\n        }\n        else if (leaf.isPoint() && leaf.metadata?.mass != undefined) {\n            points.push(leaf);\n        }\n        return leaf;\n    });\n    return centerOfMass(points);\n}\nfunction centerOfMass(points) {\n    let totalMass = 0;\n    let sx = 0, sy = 0, sz = 0;\n    for (const { geometry, metadata } of points) {\n        const [x, y, z] = geometry.asTuple();\n        const m = metadata?.mass;\n        sx += x * m;\n        sy += y * m;\n        sz += z * m;\n        totalMass += m;\n    }\n    if (totalMass === 0) {\n        throw new Error(\"centerOfMass: total mass is zero.\");\n    }\n    return new Assembly({\n        geometry: replicad.makeVertex([sx / totalMass, sy / totalMass, sz / totalMass]),\n        metadata: { mass: totalMass }\n    });\n}\n"
+    }
+  ],
+  "allConnectors": [
+    {
+      "ap2Name": "assembly",
+      "ap1ID": "id-53740",
+      "ap2ID": "id-53746"
+    },
+    {
+      "ap2Name": "defaultDensity",
+      "ap1ID": "id-53743",
+      "ap2ID": "id-53746"
+    },
+    {
+      "ap2Name": "number or geometry",
+      "ap1ID": "id-53746",
+      "ap2ID": "id-53738"
+    }
+  ],
+  "unitsKey": "Unitless",
+  "fileTypeVersion": 1,
+  "filetypeVersion": 1
 }
